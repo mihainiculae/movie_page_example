@@ -1,0 +1,1 @@
+# Get JSON and images frontend exercise

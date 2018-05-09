@@ -1,0 +1,33 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+}
+
+.searchBar {
+    padding: 1em;
+}
+
+h2,
+h4 {
+    color: white;
+}
+
+.pageHeader {
+    background-color: #00ccaa;
+    padding: 1em;
+}
+
+.results {
+    padding: 1em;
+    padding-top: 0;
+    flex-direction: row;
+}
+
+.movieBox {
+    display: flex;
+}
