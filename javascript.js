@@ -27,39 +27,54 @@ function formSubmit() {
     contentLoader(query, results);
 }
 
-function contentLoader(query, resultsElement, pageNo = 1) {
-    doFetch(query, pageNo)
+function contentLoader(query, resultsGallery, pageNo = 1) {
+    getMovieData(query, pageNo)
         .then(result => {
             if (pageNo == 1) {
-                clearChildren(resultsElement);
+                clearChildren(resultsGallery);
             }
             if (result.page == 1 && result.data.length < 1) {
-                resultsElement.appendChild(makeStatusElement("Not Found :("));
+                resultsGallery.appendChild(makeStatusElement("Not Found :("));
             } else {
-                appendToList(result.data, resultsElement);
+                appendToGallery(result.data, resultsGallery);
                 if (result.page < result.total_pages) {
                     pageNo++;
-                    return contentLoader(query, resultsElement, pageNo);
+                    return contentLoader(query, resultsGallery, pageNo);
                 }
             }
         })
         .catch(err => {
-            resultsElement.appendChild(
+            resultsGallery.appendChild(
                 makeStatusElement("Something went boom..." + err)
             );
         });
 }
 
-function doFetch(query, pageNo) {
-    return getMovieData(query, pageNo);
-}
-
-function appendToList(data, resultsElement) {
+function appendToGallery(data, resultsGallery) {
     var justMovies = data.filter(element => {
         return element.Type == "movie";
     });
     justMovies.forEach((movie, index) => {
-        resultsElement.appendChild(makeMovieDiv(movie, index));
+        resultsGallery.appendChild(makeMovieDiv(movie, index));
+    });
+}
+
+function appendToGalleryColumns(data, resultsGallery, colNo = 4) {
+    var justMovies = data.filter(element => {
+        return element.Type == "movie";
+    });
+    var columnDiv = null;
+    justMovies.forEach((movie, index) => {
+        if (index % maxHorizontal === 0) {
+            columnDiv = document.createElement("div");
+            columnDiv.setAttribute("class", "column");
+            columnDiv.appendChild(makeMovieDiv(movie, index));
+        } else if (index % maxHorizontal === colNo - 1) {
+            resultsGallery.appendChild(columnDiv);
+            columnDiv = null;
+        } else {
+            columnDiv.appendChild(makeMovieDiv(movie, index));
+        }
     });
 }
 
@@ -67,34 +82,39 @@ function makeMovieDiv(movieData, index) {
     const baseImdbUri = "https://www.imdb.com/title/";
     var defaultImage = "./assets/default.jpg";
     var imgSrc = movieData.Poster == "N/A" ? defaultImage : movieData.Poster;
-    // create image link Element
-    var linkElement = document.createElement("a");
-    linkElement.setAttribute("href", baseImdbUri + movieData.imdbID);
-    linkElement.setAttribute("target", "_blank");
-    var imageElement = document.createElement("img");
-    imageElement.setAttribute("border", "0");
-    imageElement.setAttribute("alt", movieData.Title + " movie poster");
-    imageElement.setAttribute("src", imgSrc);
-    imageElement.setAttribute("onerror", "this.src=" + defaultImage);
-    linkElement.appendChild(imageElement);
+
+    // create image link
+    var link = document.createElement("a");
+    link.setAttribute("href", baseImdbUri + movieData.imdbID);
+    link.setAttribute("target", "_blank");
+
+    // create image element
+    var poster = document.createElement("img");
+    poster.setAttribute("border", "0");
+    poster.setAttribute("alt", movieData.Title + " movie poster");
+    poster.setAttribute("src", imgSrc);
+    poster.setAttribute("onerror", "this.src=" + defaultImage);
+    poster.setAttribute("class", "posterImage");
+    link.appendChild(poster);
+
     // create title element
-    var titleElement = document
-        .createElement("span")
-        .appendChild(document.createTextNode(movieData.Title));
-    var descriptionElement = document
-        .createElement("span")
-        .appendChild(
-            document.createTextNode(
-                movieData.Type.toUpperCase() + ", " + movieData.Year
-            )
-        );
+    var title = document.createElement("span");
+    title.setAttribute("class", "descSpan");
+    title.appendChild(document.createTextNode(movieData.Title));
+    var description = document.createElement("span");
+    description.setAttribute("class", "descSpan");
+    description.appendChild(
+        document.createTextNode(
+            movieData.Type.toUpperCase() + ", " + movieData.Year
+        )
+    );
     // create the div to hold them all
     var movieDiv = document.createElement("div");
     movieDiv.setAttribute("class", "movieBox");
     movieDiv.setAttribute("id", "movieBox" + index);
-    movieDiv.appendChild(linkElement);
-    movieDiv.appendChild(titleElement);
-    movieDiv.appendChild(descriptionElement);
+    movieDiv.appendChild(link);
+    movieDiv.appendChild(title);
+    movieDiv.appendChild(description);
     return movieDiv;
 }
 
@@ -110,13 +130,4 @@ function getMovieData(title, pageNo) {
             "content-type": "application/json"
         }
     }).then(response => response.json());
-}
-
-function getPoster(uri) {
-    return fetch(baseUri, {
-        method: "GET",
-        headers: {
-            "content-type": "image/jpeg"
-        }
-    });
 }
