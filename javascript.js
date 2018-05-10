@@ -36,7 +36,11 @@ function contentLoader(query, resultsGallery, pageNo = 1) {
             if (result.page == 1 && result.data.length < 1) {
                 resultsGallery.appendChild(makeStatusElement("Not Found :("));
             } else {
-                appendToGallery(result.data, resultsGallery);
+                // just use movies
+                let filteredMovies = result.data.filter(item => {
+                    return item.Type == "movie";
+                });
+                appendToGallery(filteredMovies, resultsGallery);
                 if (result.page < result.total_pages) {
                     pageNo++;
                     return contentLoader(query, resultsGallery, pageNo);
@@ -51,34 +55,12 @@ function contentLoader(query, resultsGallery, pageNo = 1) {
 }
 
 function appendToGallery(data, resultsGallery) {
-    var justMovies = data.filter(element => {
-        return element.Type == "movie";
-    });
-    justMovies.forEach((movie, index) => {
-        resultsGallery.appendChild(makeMovieDiv(movie, index));
+    data.forEach(movie => {
+        resultsGallery.appendChild(makeMovieDiv(movie));
     });
 }
 
-function appendToGalleryColumns(data, resultsGallery, colNo = 4) {
-    var justMovies = data.filter(element => {
-        return element.Type == "movie";
-    });
-    var columnDiv = null;
-    justMovies.forEach((movie, index) => {
-        if (index % maxHorizontal === 0) {
-            columnDiv = document.createElement("div");
-            columnDiv.setAttribute("class", "column");
-            columnDiv.appendChild(makeMovieDiv(movie, index));
-        } else if (index % maxHorizontal === colNo - 1) {
-            resultsGallery.appendChild(columnDiv);
-            columnDiv = null;
-        } else {
-            columnDiv.appendChild(makeMovieDiv(movie, index));
-        }
-    });
-}
-
-function makeMovieDiv(movieData, index) {
+function makeMovieDiv(movieData) {
     const baseImdbUri = "https://www.imdb.com/title/";
     var defaultImage = "./assets/default.jpg";
     var imgSrc = movieData.Poster == "N/A" ? defaultImage : movieData.Poster;
@@ -111,7 +93,6 @@ function makeMovieDiv(movieData, index) {
     // create the div to hold them all
     var movieDiv = document.createElement("div");
     movieDiv.setAttribute("class", "movieBox");
-    movieDiv.setAttribute("id", "movieBox" + index);
     movieDiv.appendChild(link);
     movieDiv.appendChild(title);
     movieDiv.appendChild(description);
