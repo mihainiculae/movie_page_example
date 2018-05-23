@@ -5,7 +5,10 @@ window.onscroll = function(ev) {
     }
 };
 
-function clearChildren(element) {
+var state = "initialized";
+
+function clearChildren(element, cb) {
+    console.log("clearing");
     while (element.firstChild) {
         element.removeChild(element.firstChild);
     }
@@ -19,15 +22,25 @@ function makeStatusElement(text) {
 }
 
 function formSubmit() {
-    var results = document.getElementById("result");
-    clearChildren(results);
-    results.appendChild(makeStatusElement("Loading..."));
+    if (state === "initialized") state = "newSearch";
+    if (state === "loading") state = "cleanUp";
+    var resultsGallery = document.getElementById("resultsGallery");
+    clearChildren(resultsGallery);
+    resultsGallery.appendChild(makeStatusElement("Loading..."));
     var form = document.getElementById("movieSearch");
     var query = form.elements["title"].value.trim();
-    contentLoader(query, results);
+    contentLoader(query, resultsGallery);
 }
 
 function contentLoader(query, resultsGallery, pageNo = 1) {
+    if (state == "cleanUp") {
+        clearChildren(resultsGallery);
+        state = "newSearch";
+        return;
+    }
+    if (state == "newSearch") {
+        state = "loading";
+    }
     getMovieData(query, pageNo)
         .then(result => {
             if (pageNo == 1) {
@@ -75,7 +88,7 @@ function makeMovieDiv(movieData) {
     poster.setAttribute("border", "0");
     poster.setAttribute("alt", movieData.Title + " movie poster");
     poster.setAttribute("src", imgSrc);
-    poster.setAttribute("onerror", "this.src=" + defaultImage);
+    poster.setAttribute("onerror", "this.src='" + defaultImage + "'");
     poster.setAttribute("class", "posterImage");
     link.appendChild(poster);
 
